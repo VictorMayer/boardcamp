@@ -1,4 +1,4 @@
-import { gameSchema } from "./schemas.js";
+import { gameSchema, userSchema } from "./schemas.js";
 import express from "express";
 import chalk from "chalk";
 import cors from "cors";
@@ -57,7 +57,7 @@ app.post("/games", async (req, res) => {
         const existentId = await connection.query(`SELECT * FROM categories WHERE id = $1`, [categoryId]);
         if(!existentId.rows.length || isValid.error) return res.sendStatus(400); 
         const alreadyUsed = await connection.query(`SELECT * FROM games WHERE name = $1`, [name]);
-        if(alreadyUsed.rows.length > 0) return res.sendStatus(409);
+        if(alreadyUsed.rows.length) return res.sendStatus(409);
         await connection.query(`INSERT INTO games (name, image, "stockTotal", "categoryId", "pricePerDay") VALUES ($1, $2, $3, $4, $5)`, [name, image, stockTotal, categoryId, pricePerDay]);
         res.sendStatus(201);
     } catch (err) {
@@ -92,13 +92,20 @@ app.get("/games", async (req, res) => {
 
 app.post("/customers", async (req, res) => {
     try {
-
+        const { name, phone, cpf, birthday } = req.body;
+        const isValid = userSchema.validate(req.body);
+        if (isValid.error) return res.sendStatus(400);
+        const existentCpf = await connection.query(`SELECT * FROM customers WHERE cpf = $1`, [cpf]);
+        if (existentCpf.rows.length) return res.sendStatus(409);
+        await connection.query(`INSERT INTO customers (name, phone, cpf, birthday) VALUES ($1, $2, $3, $4)`, [name, phone, cpf, birthday]);
+        res.sendStatus(201);
     } catch (err) {
         console.log(err);
+        res.sendStatus(500);
     }
 });
 
-app.put("/customers", async (req, res) => {
+app.put("/customers:id", async (req, res) => {
     try {
 
     } catch (err) {
