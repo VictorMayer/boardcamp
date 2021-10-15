@@ -29,7 +29,7 @@ app.post("/categories", async (req, res) => {
         const { name } = req.body;
         const isNameAvailable = await connection.query("SELECT * FROM categories WHERE name = $1", [name]);
         if(isNameAvailable.rows.length > 0) return res.sendStatus(409);
-        if(name.lenght === 0) return res.sendStatus(400);
+        if(name.lenght) return res.sendStatus(400);
         await connection.query("INSERT INTO categories (name) VALUES ($1)", [name]);
         res.sendStatus(201);
     } catch (err) {
@@ -55,7 +55,7 @@ app.post("/games", async (req, res) => {
         const { name, image, stockTotal, categoryId, pricePerDay } = req.body;
         const isValid = gameSchema.validate(req.body);
         const existentId = await connection.query(`SELECT * FROM categories WHERE id = $1`, [categoryId]);
-        if(existentId.rows.length > 0 || isValid.error) return res.sendStatus(400); 
+        if(!existentId.rows.length || isValid.error) return res.sendStatus(400); 
         const alreadyUsed = await connection.query(`SELECT * FROM games WHERE name = $1`, [name]);
         if(alreadyUsed.rows.length > 0) return res.sendStatus(409);
         await connection.query(`INSERT INTO games (name, image, "stockTotal", "categoryId", "pricePerDay") VALUES ($1, $2, $3, $4, $5)`, [name, image, stockTotal, categoryId, pricePerDay]);
@@ -73,12 +73,12 @@ app.get("/games", async (req, res) => {
         if(search){
             const result = await connection.query(`
             SELECT * FROM games
-            INNER JOIN categories
+            JOIN categories
             ON games."categoryId" = categories.id
             WHERE games.name ILIKE $1`, [search+'%']);
             res.send(result.rows);
         } else {
-            const result = await connection.query(`SELECT * FROM games`);
+            const result = await connection.query(`SELECT * FROM games JOIN categories ON games."categoryId" = categories.id`);
             res.send(result.rows);
         }
     } catch (err) {
