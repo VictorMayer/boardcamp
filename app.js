@@ -1,4 +1,4 @@
-import { gameSchema } from "./schemas";
+import { gameSchema } from "./schemas.js";
 import express from "express";
 import chalk from "chalk";
 import cors from "cors";
@@ -68,9 +68,14 @@ app.post("/games", async (req, res) => {
 
 app.get("/games", async (req, res) => {
     try {
-
+        const search = req.query;
+        console.log(search);
+        if(search){
+            
+        }
     } catch (err) {
         console.log(err);
+        res.sendStatus(500);
     }
 });
 
