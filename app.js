@@ -72,13 +72,14 @@ app.get("/games", async (req, res) => {
         console.log(search);
         if(search){
             const result = await connection.query(`
-            SELECT * FROM games
+            SELECT games.*, categories.name AS "categoryName"
+            FROM games
             JOIN categories
             ON games."categoryId" = categories.id
             WHERE games.name ILIKE $1`, [search+'%']);
             res.send(result.rows);
         } else {
-            const result = await connection.query(`SELECT * FROM games JOIN categories ON games."categoryId" = categories.id`);
+            const result = await connection.query(`SELECT games.*, categories.name AS "categoryName" FROM games JOIN categories ON games."categoryId" = categories.id`);
             res.send(result.rows);
         }
     } catch (err) {
