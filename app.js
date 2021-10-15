@@ -1,7 +1,9 @@
+import { gameSchema } from "./schemas";
 import express from "express";
 import chalk from "chalk";
 import cors from "cors";
 import pg from "pg";
+
 
 const port = 4000;
 const app = express();
@@ -51,14 +53,20 @@ app.get("/categories", async (req, res) => {
 app.post("/games", async (req, res) => {
     try {
         const { name, image, stockTotal, categoryId, pricePerDay } = req.body;
-        
+        const isValid = gameSchema.validate(req.body);
+        const existentId = await connection.query(`SELECT * FROM categories WHERE id = $1`, [categoryId]);
+        if(existentId.rows.length > 0 || isValid.error) return res.sendStatus(400); 
+        const alreadyUsed = await connection.query(`SELECT * FROM games WHERE name = $1`, [name]);
+        if(alreadyUsed.rows.length > 0) return res.sendStatus(409);
+        await connection.query(`INSERT INTO games (name, image, "stockTotal", "categoryId", "pricePerDay") VALUES ($1, $2, $3, $4, $5)`, [name, image, stockTotal, categoryId, pricePerDay]);
+        res.sendStatus(201);
     } catch (err) {
         console.log(err);
         res.sendStatus(500);
     }
 });
 
-app.get("/gams", async (req, res) => {
+app.get("/games", async (req, res) => {
     try {
 
     } catch (err) {
