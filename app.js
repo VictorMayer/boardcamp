@@ -117,14 +117,24 @@ app.put("/customers/:id", async (req, res) => {
         res.sendStatus(200);
     } catch (err) {
         console.log(err);
+        res.sendStatus(500);
     }
 });
 
 app.get("/customers", async (req, res) => {
     try {
-
+        const search = req.query.cpf;
+        console.log(search);
+        if(search){
+            const result = await connection.query(`SELECT * FROM customers WHERE cpf ILIKE $1`, [search+'%']);
+            res.send(result.rows);
+        } else {
+            const result = await connection.query(`SELECT * FROM customers`);
+            res.send(result.rows);
+        }
     } catch (err) {
         console.log(err);
+        res.sendStatus(500);
     }
 });
 
