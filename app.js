@@ -105,9 +105,16 @@ app.post("/customers", async (req, res) => {
     }
 });
 
-app.put("/customers:id", async (req, res) => {
+app.put("/customers/:id", async (req, res) => {
     try {
-
+        const { id } = req.params;
+        const { name, phone, cpf, birthday } = req.body;
+        const isValid = userSchema.validate(req.body);
+        if(isValid.error) return res.sendStatus(400);
+        const existentCpf = await connection.query(`SELECT * FROM customers WHERE cpf = $1 AND name != $2`, [cpf, id]);
+        if (existentCpf.rows.length) return res.sendStatus(409);
+        await connection.query(`UPDATE customers SET name = $1, phone = $2, cpf = $3, birthday = $4`);
+        res.sendStatus(200);
     } catch (err) {
         console.log(err);
     }
