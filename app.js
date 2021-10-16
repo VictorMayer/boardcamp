@@ -1,6 +1,7 @@
 import { gameSchema, userSchema } from "./schemas.js";
 import express from "express";
 import chalk from "chalk";
+import dayjs from "dayjs";
 import cors from "cors";
 import pg from "pg";
 
@@ -146,6 +147,7 @@ app.get("/customers/:id", async (req, res) => {
         existentId.rows.length ? res.send(existentId.rows[0]) : res.sendStatus(404);
     } catch (err) {
         console.log(err);
+        res.sendStatus(500);
     }
 });
 
@@ -153,15 +155,33 @@ app.get("/customers/:id", async (req, res) => {
 
 app.post("/rentals", async (req, res) => {
     try {
-
+        const { customerId, gameId, daysRented } = req.body;
+        const existentId = await connection.query(`SELECT * FROM customer WHERE id = $1`, [customerId]);
+        const existentGame = await connection.query(`SELECT * FROM games WHERE id = $1`, [gameId]);
+        const numOfRentedGames = await connection.query(`SELECT * FROM rentals WHERE "gameId" = $1 AND "returnDate" = $2`, [gameId, null]); 
+        if(!existentId.rows.length || !existentGame.rows.length || daysRented <= 0) return res.sendStatus(400);
+        if (existentGame.rows[0].stockTotal <= numOfRentedGames) return res.sendStatus(400);
+        const originalPrice = existentGame.rows[0].pricePerDay * daysRented;
+        const newRental = {
+            customerId,
+            gameId,
+            rentDate: dayjs().format('YYYY-MM-DD'),
+            daysRented,
+            returnDate: null,
+            originalPrice,
+            delayFee: null
+        }
+        await connection.query(`INSERT INTO rentals ("customerId", "gameId", "rentDate", "daysRented", "returnDate", "originalPrice", "delayFee") VALUES ($1, $2, $3, $4, $5, $6)`, [newRental.customerId, newRental.gameId, newRental.rentDate, newRental.daysRented, newRental.returnDate, newRental.originalPrice, newRental.delayFee]);
+        res.sendStatus(201);
     } catch (err) {
         console.log(err);
+        res.sendStatus(500);
     }
 });
 
 app.get("/rentals", async (req, res) => {
     try {
-
+        
     } catch (err) {
         console.log(err);
     }
