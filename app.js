@@ -95,7 +95,7 @@ app.post("/customers", async (req, res) => {
     try {
         const { name, phone, cpf, birthday } = req.body;
         const isValid = userSchema.validate(req.body);
-        if (isValid.error) return res.sendStatus(400);
+        if (isValid.error) {console.log(isValid.error);return res.sendStatus(400);}
         const existentCpf = await connection.query(`SELECT * FROM customers WHERE cpf = $1`, [cpf]);
         if (existentCpf.rows.length) return res.sendStatus(409);
         await connection.query(`INSERT INTO customers (name, phone, cpf, birthday) VALUES ($1, $2, $3, $4)`, [name, phone, cpf, birthday]);
@@ -112,9 +112,9 @@ app.put("/customers/:id", async (req, res) => {
         const { name, phone, cpf, birthday } = req.body;
         const isValid = userSchema.validate(req.body);
         if(isValid.error) return res.sendStatus(400);
-        const existentCpf = await connection.query(`SELECT * FROM customers WHERE cpf = $1 AND name != $2`, [cpf, id]);
+        const existentCpf = await connection.query(`SELECT * FROM customers WHERE cpf = $1 AND id != $2`, [cpf, id]);
         if (existentCpf.rows.length) return res.sendStatus(409);
-        await connection.query(`UPDATE customers SET name = $1, phone = $2, cpf = $3, birthday = $4`);
+        await connection.query(`UPDATE customers SET name = $1, phone = $2, cpf = $3, birthday = $4`, [name, phone, cpf, birthday]);
         res.sendStatus(200);
     } catch (err) {
         console.log(err);
@@ -181,7 +181,7 @@ app.post("/rentals", async (req, res) => {
 
 app.get("/rentals", async (req, res) => {
     try {
-        
+
     } catch (err) {
         console.log(err);
     }
