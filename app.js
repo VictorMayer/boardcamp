@@ -140,7 +140,10 @@ app.get("/customers", async (req, res) => {
 
 app.get("/customers/:id", async (req, res) => {
     try {
-         
+        const id = req.params.id;
+        console.log(id);
+        const existentId = await connection.query(`SELECT * FROM customers WHERE id = $1`, [id]);
+        existentId.rows.length ? res.send(existentId.rows[0]) : res.sendStatus(404);
     } catch (err) {
         console.log(err);
     }
