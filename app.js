@@ -189,11 +189,9 @@ app.get("/rentals", async (req, res) => {
             JOIN customers ON "customerId" = customers.id 
             JOIN games ON "gameId" = games.id 
             INNER JOIN categories ON games."categoryId" = categories.id
-        `);
+        `);          */
 
-        */
-
-
+        
         /* TENTATIVA 2:
 
         const result = [];
@@ -206,9 +204,8 @@ app.get("/rentals", async (req, res) => {
             result.push(newIndex);
         });
         console.log("this is result!", result);
-        res.send(result);
-
-        */
+        res.send(result);                   */
+        
 
         /* TENTATIVA 3:     DEU CERTO!!!   */
         const result = [];
@@ -238,15 +235,25 @@ app.get("/rentals", async (req, res) => {
 
 app.post("/rentals/:id/return", async (req, res) => {
     try {
-
+        const id = req.params.id;
+        const rental = await connection.query(`SELECT * FROM rentals WHERE id = $1`, [id]);
+        if (!rental.rows.length) return res.sendStatus(404);
+        if (rental.rows[0].returnDate !== null) return res.sendStatus(400);
+        const initialDate = dayjs(rental.rows[0].rentDate).format('YYYY-MM-DD');
+        const returningDate = dayjs().format('YYYY-MM-DD');
+        const dateDiff = dayjs(returningDate).diff(initialDate, 'd');
+        const fee = (dateDiff > 0) ? dateDiff * (rental.rows[0].originalPrice / rental.rows[0].daysRented) : 0 ;
+        await connection.data(`UPDATE rentals SET "returnDate" = $1, "delayFee" = $2 WHERE id = $3`, [returningDate, fee, id]);
+        res.sendStatus(200);
     } catch (err) {
         console.log(err);
+        res.sendStatus(500);
     }
 });
 
 app.delete("/rentals/:id", async (req, res) => {
     try { 
-
+        
     } catch (err) {
         console.log(err);
     }
